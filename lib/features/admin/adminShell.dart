@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth/admin_login.dart';
 import 'dashboard/admin_dashboard.dart';
 import 'inventory/inventory_page.dart';
+import 'reservations/reservation_page.dart';
+
 
 // ─────────────────────────────────────────────────────────────
 //  MERIDIAN MOTORS — Admin Shell
@@ -201,7 +203,7 @@ class _AdminShellState extends State<AdminShell> {
                  }),
                );
       case 1:  return const InventoryPage();
-      case 2:  return _PlaceholderPage('Reservations',   Icons.calendar_month_rounded,  MM.accentAmber);
+      case 2:  return const ReservationsPage();
       case 3:  return _PlaceholderPage('Customers',      Icons.people_rounded,           MM.accentPurple);
       case 4:  return _PlaceholderPage('Inquiries',      Icons.mail_rounded,             MM.accentRed);
       case 5:  return _PlaceholderPage('Settings',       Icons.settings_rounded,         MM.textSub);

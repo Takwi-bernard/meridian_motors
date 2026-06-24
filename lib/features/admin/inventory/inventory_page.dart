@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../adminShell.dart';
 import 'package:meridian_motors/features/admin/inventory/add_vehicle_page.dart';
+import '../inventory/car_details_page.dart';
+import '../inventory/edit_vehicle_page.dart';
+
 // ─────────────────────────────────────────────────────────────
 //  MERIDIAN MOTORS — Inventory Page
 //  Lives inside AdminShell — no Scaffold/AppBar needed
@@ -625,10 +628,22 @@ class _InventoryPageState extends State<InventoryPage> {
                         onSelected: (value) async {
                           switch (value) {
                             case 'view':
-                              _showToast('View page coming soon.');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      CarDetailPage(carId: id),
+                                ),
+                              );
                               break;
                             case 'edit':
-                              _showToast('Edit page coming soon.');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      EditVehiclePage(carId: id),
+                                ),
+                              );
                               break;
                             case 'available':
                               await _updateStatus(
