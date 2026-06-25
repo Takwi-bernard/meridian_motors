@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:meridian_motors/features/admin/adminShell.dart';
 import 'package:meridian_motors/features/admin/auth/admin_login.dart';
 import 'package:meridian_motors/features/admin/dashboard/admin_dashboard.dart';
 import '../home/home_page.dart';
@@ -121,7 +122,7 @@ class WelcomePage extends StatelessWidget {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const AdminLoginPage(),
+                          builder: (_) => const AdminShell(),
                         ),
                       );
                     },

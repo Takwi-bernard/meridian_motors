@@ -5,8 +5,9 @@ import 'auth/admin_login.dart';
 import 'dashboard/admin_dashboard.dart';
 import 'inventory/inventory_page.dart';
 import 'reservations/reservation_page.dart';
-
-
+import 'customers/customers.dart';
+import 'inquiries/inquiries.dart';
+import 'settings/admin_settings_page.dart';
 // ─────────────────────────────────────────────────────────────
 //  MERIDIAN MOTORS — Admin Shell
 //  Persistent sidebar + body-swap navigation (shell pattern)
@@ -204,9 +205,9 @@ class _AdminShellState extends State<AdminShell> {
                );
       case 1:  return const InventoryPage();
       case 2:  return const ReservationsPage();
-      case 3:  return _PlaceholderPage('Customers',      Icons.people_rounded,           MM.accentPurple);
-      case 4:  return _PlaceholderPage('Inquiries',      Icons.mail_rounded,             MM.accentRed);
-      case 5:  return _PlaceholderPage('Settings',       Icons.settings_rounded,         MM.textSub);
+      case 3:  return const CustomersPage();
+      case 4:  return const InquiriesPage();
+      case 5:  return const SettingsPage();
       default: return const AdminDashboardBody();
     }
   }
