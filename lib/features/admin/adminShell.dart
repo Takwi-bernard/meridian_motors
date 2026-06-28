@@ -1,3 +1,5 @@
+
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -99,10 +101,42 @@ class _AdminShellState extends State<AdminShell> {
   Future<void> _initShell() async {
     final ok = await _checkAdmin();
     if (ok) {
+      _subscribeShellRealtime();
       await _loadProfile();
       await _loadBadgeCounts();
     }
   }
+
+// Add to _AdminShellState fields
+RealtimeChannel? _shellChannel;
+
+// Add this method to _AdminShellState
+void _subscribeShellRealtime() {
+  _shellChannel = Supabase.instance.client
+      .channel('shell_badge_channel')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.insert,
+        schema: 'public',
+        table: 'reservations',
+        callback: (_) async {
+          await _loadBadgeCounts();
+        },
+      )
+      .onPostgresChanges(
+        event: PostgresChangeEvent.insert,
+        schema: 'public',
+        table: 'inquiries',
+        callback: (_) async {
+          await _loadBadgeCounts();
+        },
+      )
+      .subscribe();
+}
+
+// Add to initState in _AdminShellState (after _initShell())
+
+
+// Add to dispose in _AdminShellState
 
   Future<bool> _checkAdmin() async {
     final supabase = Supabase.instance.client;

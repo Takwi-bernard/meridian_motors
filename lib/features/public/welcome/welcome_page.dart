@@ -1,14 +1,63 @@
 import 'package:flutter/material.dart';
-import 'package:meridian_motors/features/admin/adminShell.dart';
-import 'package:meridian_motors/features/admin/auth/admin_login.dart';
-import 'package:meridian_motors/features/admin/dashboard/admin_dashboard.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../home/home_page.dart';
+import '../dashboard/customer_dashboard.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
 
   @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  // True while we're checking auth state. Keeps the screen blank/dark
+  // for a beat instead of flashing the welcome UI before redirecting.
+  bool _checkingAuth = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthAndRoute();
+  }
+
+  void _checkAuthAndRoute() {
+    final session = Supabase.instance.client.auth.currentSession;
+
+    if (session != null) {
+      // Already authenticated -> skip welcome entirely, go to dashboard.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const CustomerDashboardPage()),
+        );
+      });
+    } else {
+      // Not authenticated -> show the normal welcome screen.
+      setState(() => _checkingAuth = false);
+    }
+  }
+
+  void _goToHome(BuildContext context) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomePage()),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_checkingAuth) {
+      // Brief dark loading state while we check the session.
+      return const Scaffold(
+        backgroundColor: Color(0xFF0F0F11),
+        body: Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+      );
+    }
+
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -118,14 +167,7 @@ class WelcomePage extends StatelessWidget {
                   width: double.infinity,
                   height: 58,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AdminShell(),
-                        ),
-                      );
-                    },
+                    onPressed: () => _goToHome(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFF111111),
@@ -141,20 +183,10 @@ class WelcomePage extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 14),
-
-
-                const SizedBox(height: 16),
+                const SizedBox(height: 30),
 
                 TextButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AdminLoginPage(),
-                      ),
-                    );
-                  },
+                  onPressed: () => _goToHome(context),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF9CA3AF),
                   ),
@@ -187,13 +219,6 @@ class WelcomePage extends StatelessWidget {
             ),
             child: Container(
               color: Colors.black.withOpacity(0.45),
-              child: Center(
-                // child: Image.asset(
-                //   'assets/images/meridian_logo.png',
-                //   width: 450,
-                //   fit: BoxFit.contain,
-                // ),
-              ),
             ),
           ),
         ),
@@ -203,15 +228,22 @@ class WelcomePage extends StatelessWidget {
             color: const Color(0xFF111111),
             padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 40),
             child: ListView(
-              // mainAxisAlignment: MainAxisAlignment.center,
-              // crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                 Image.asset(
+                Image.asset(
                   'assets/images/meridian_logo.png',
                   width: 450,
                   fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Text(
+                    "MERIDIAN MOTORS",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
                 ),
-                 const SizedBox(height: 18),
+                const SizedBox(height: 18),
                 const Text(
                   "Find Your Dream Car",
                   style: TextStyle(
@@ -235,14 +267,7 @@ class WelcomePage extends StatelessWidget {
                   width: 280,
                   height: 58,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const HomePage(),
-                        ),
-                      );
-                    },
+                    onPressed: () => _goToHome(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFF111111),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:meridian_motors/features/admin/auth/admin_login.dart';
 import '../welcome/welcome_page.dart';
 
 class SplashPage extends StatefulWidget {
@@ -23,7 +24,7 @@ class _SplashPageState extends State<SplashPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const WelcomePage(),
+          builder: (_) => const AdminLoginPage(),
         ),
       );
     });

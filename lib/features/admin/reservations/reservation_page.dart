@@ -47,8 +47,9 @@ class _ReservationsPageState extends State<ReservationsPage> {
   @override
   void initState() {
     super.initState();
-    _load();
     _subscribeRealtime();
+    _load();
+    
   }
 
   @override

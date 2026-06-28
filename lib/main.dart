@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'features/public/splash/splash_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+usePathUrlStrategy();
   // Load environment variables
   await dotenv.load(fileName: ".env");
 
@@ -14,6 +14,10 @@ Future<void> main() async {
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     publishableKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    realtimeClientOptions: const RealtimeClientOptions(
+    logLevel: RealtimeLogLevel.info,
+    timeout: Duration(seconds: 30),
+  ),
   );
 
   runApp(const MeridianMotorsApp());
@@ -25,7 +29,7 @@ class MeridianMotorsApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Meridian Motors",
+      title: "Meridian Motors Admin",
       debugShowCheckedModeBanner: false,
 
       theme: ThemeData(
