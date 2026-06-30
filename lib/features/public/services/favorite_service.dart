@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/car_model.dart';
 
 /// All Supabase access for favorites lives here, mirroring the pattern
 /// used by CarService — widgets never talk to Supabase directly.
@@ -47,5 +48,32 @@ class FavoriteService {
 
   Future<void> toggleFavorite(String carId, {required bool isCurrentlyFavorite}) {
     return isCurrentlyFavorite ? removeFavorite(carId) : addFavorite(carId);
+  }
+
+  /// Full car details (with images) for everything the current user has
+  /// favorited — used by the Favorites panel, which needs more than just
+  /// the bare IDs that [fetchFavoriteCarIds] returns.
+  Future<List<CarModel>> fetchFavoriteCars() async {
+    final userId = _userId;
+    if (userId == null) return [];
+
+    final response = await _client
+        .from('favorites')
+        .select('car_id, cars(*, car_images(image_url, is_primary, display_order))')
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+
+    final rows = response as List<dynamic>;
+    final cars = <CarModel>[];
+
+    for (final row in rows) {
+      final carData = (row as Map<String, dynamic>)['cars'];
+      // A favorited car may have since been deleted by the admin —
+      // skip those rather than crashing on a null join.
+      if (carData == null) continue;
+      cars.add(CarModel.fromMap(carData as Map<String, dynamic>));
+    }
+
+    return cars;
   }
 }

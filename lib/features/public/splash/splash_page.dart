@@ -24,7 +24,7 @@ class _SplashPageState extends State<SplashPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const AdminLoginPage(),
+          builder: (_) => const WelcomePage(),
         ),
       );
     });

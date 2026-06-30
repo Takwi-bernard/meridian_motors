@@ -4,16 +4,18 @@ import '../models/car_model.dart';
 import '../widgets/car_browse_panel.dart';
 import '../welcome/welcome_page.dart';
 import '../services/favorite_service.dart';
-import 'widgets/dashboard_nav.dart';
+import '../services/notification_service.dart';
+import 'panel/dashboard_nav.dart';
+import 'panel/favorites_panel.dart';
 import 'panel/reservations_panel.dart';
 import 'panel/inquiries_panel.dart';
+import 'panel/notifications_panel.dart';
 import 'panel/profile_panel.dart';
 
 /// Authenticated customer's home base. Desktop gets a persistent
 /// sidebar; mobile gets a hamburger-triggered drawer with the same
-/// nav items, per spec. The default tab is the car grid (same data
-/// as the public Home page) but here favoriting actually works
-/// instead of redirecting to auth.
+/// nav items. Tabs: Browse Cars, Favorites, Reservations, Inquiries,
+/// Notifications, Profile.
 class CustomerDashboardPage extends StatefulWidget {
   const CustomerDashboardPage({super.key});
 
@@ -22,17 +24,24 @@ class CustomerDashboardPage extends StatefulWidget {
 }
 
 class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
+  static const int _favoritesTabIndex = 1;
+  static const int _notificationsTabIndex = 4;
+
   final FavoriteService _favoriteService = FavoriteService();
-  final GlobalKey<CarBrowsePanelState> _browseKey =
-      GlobalKey<CarBrowsePanelState>();
+  final NotificationService _notificationService = NotificationService();
+  final GlobalKey<CarBrowsePanelState> _browseKey = GlobalKey<CarBrowsePanelState>();
+  final GlobalKey<FavoritesPanelState> _favoritesKey = GlobalKey<FavoritesPanelState>();
+  final GlobalKey<NotificationsPanelState> _notificationsKey = GlobalKey<NotificationsPanelState>();
 
   int _selectedIndex = 0;
   Set<String> _favoriteCarIds = {};
+  int _unreadNotifications = 0;
 
   @override
   void initState() {
     super.initState();
     _loadFavorites();
+    _loadUnreadCount();
   }
 
   Future<void> _loadFavorites() async {
@@ -44,9 +53,19 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
     }
   }
 
+  Future<void> _loadUnreadCount() async {
+    try {
+      final count = await _notificationService.fetchUnreadCount();
+      if (mounted) setState(() => _unreadNotifications = count);
+    } catch (_) {
+      // Non-fatal — badge just stays at its last known value.
+    }
+  }
+
   /// Optimistically updates the UI, then syncs with Supabase. Reverts
   /// and shows an error if the write fails, so the heart icon never
-  /// lies about the actual saved state.
+  /// lies about the actual saved state. Also refreshes the Favorites
+  /// tab so a heart toggled from Browse/Detail is reflected there too.
   Future<void> _handleFavoriteTap(CarModel car) async {
     final wasFavorite = _favoriteCarIds.contains(car.id);
 
@@ -60,6 +79,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
 
     try {
       await _favoriteService.toggleFavorite(car.id, isCurrentlyFavorite: wasFavorite);
+      _favoritesKey.currentState?.load();
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -87,6 +107,11 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
 
   void _selectTab(int index) => setState(() => _selectedIndex = index);
 
+  void _goToNotifications() {
+    setState(() => _selectedIndex = _notificationsTabIndex);
+    _notificationsKey.currentState?.load();
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -110,6 +135,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
                 selectedIndex: _selectedIndex,
                 onSelect: _selectTab,
                 onSignOut: _signOut,
+                badgeCounts: {_notificationsTabIndex: _unreadNotifications},
               ),
             ),
           ),
@@ -141,6 +167,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
               Navigator.pop(context); // close the drawer after picking a tab
             },
             onSignOut: _signOut,
+            badgeCounts: {_notificationsTabIndex: _unreadNotifications},
           ),
         ),
       ),
@@ -151,6 +178,7 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
   Widget _buildContent() {
     // IndexedStack keeps each panel's state alive (scroll position,
     // search text, etc.) when switching tabs instead of rebuilding it.
+    // Order here MUST match dashboardNavItems in dashboard_nav.dart.
     return IndexedStack(
       index: _selectedIndex,
       children: [
@@ -164,9 +192,20 @@ class _CustomerDashboardPageState extends State<CustomerDashboardPage> {
             onFavoriteTap: _handleFavoriteTap,
           ),
         ),
+        FavoritesPanel(key: _favoritesKey),
         const ReservationsPanel(),
         const InquiriesPanel(),
-        //ProfilePanel(onSignOut: _signOut),
+        NotificationsPanel(
+          key: _notificationsKey,
+          onUnreadCountChanged: (count) {
+            if (mounted) setState(() => _unreadNotifications = count);
+          },
+        ),
+        ProfilePanel(
+          onSignOut: _signOut,
+          onViewNotifications: _goToNotifications,
+          unreadNotificationCount: _unreadNotifications,
+        ),
       ],
     );
   }

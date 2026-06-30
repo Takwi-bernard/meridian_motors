@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/car_model.dart';
 import '../../services/reservation_service.dart';
+import 'reservation_payment_notice_dialog.dart';
 
 class ReservationFormSheet extends StatefulWidget {
   const ReservationFormSheet({super.key, required this.car});
@@ -92,9 +93,17 @@ class _ReservationFormSheetState extends State<ReservationFormSheet> {
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       );
       if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reservation submitted — pending dealership approval.')),
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => ReservationPaymentNoticeDialog(
+            carTitle: widget.car.title,
+            carPrice: widget.car.displayPrice,
+            onDone: () {
+              Navigator.pop(dialogContext); // close the notice dialog
+              if (mounted) Navigator.pop(context); // close the reservation form sheet
+            },
+          ),
         );
       }
     } catch (e) {

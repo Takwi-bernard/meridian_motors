@@ -8,8 +8,10 @@ class DashboardNavItem {
 
 const List<DashboardNavItem> dashboardNavItems = [
   DashboardNavItem(icon: Icons.directions_car_filled, label: 'Browse Cars'),
+  DashboardNavItem(icon: Icons.favorite_border, label: 'Favorites'),
   DashboardNavItem(icon: Icons.event_available, label: 'Reservations'),
   DashboardNavItem(icon: Icons.chat_bubble_outline, label: 'Inquiries'),
+  DashboardNavItem(icon: Icons.notifications_none, label: 'Notifications'),
   DashboardNavItem(icon: Icons.person_outline, label: 'Profile'),
 ];
 
@@ -21,11 +23,16 @@ class DashboardNavList extends StatelessWidget {
     required this.selectedIndex,
     required this.onSelect,
     required this.onSignOut,
+    this.badgeCounts = const {},
   });
 
   final int selectedIndex;
   final ValueChanged<int> onSelect;
   final VoidCallback onSignOut;
+
+  /// Maps a nav item's index to an unread count to show as a small
+  /// pill next to it (e.g. {3: 2} shows "2" next to Notifications).
+  final Map<int, int> badgeCounts;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +57,7 @@ class DashboardNavList extends StatelessWidget {
           final index = entry.key;
           final item = entry.value;
           final selected = index == selectedIndex;
+          final badge = badgeCounts[index] ?? 0;
 
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
@@ -69,6 +77,19 @@ class DashboardNavList extends StatelessWidget {
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
+                trailing: badge > 0
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDC2626),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$badge',
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      )
+                    : null,
                 onTap: () => onSelect(index),
               ),
             ),
