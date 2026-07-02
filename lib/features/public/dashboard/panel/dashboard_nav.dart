@@ -1,22 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DashboardNavItem {
-  const DashboardNavItem({required this.icon, required this.label});
+  const DashboardNavItem({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+  });
   final IconData icon;
+  final IconData selectedIcon;
   final String label;
 }
 
 const List<DashboardNavItem> dashboardNavItems = [
-  DashboardNavItem(icon: Icons.directions_car_filled, label: 'Browse Cars'),
-  DashboardNavItem(icon: Icons.favorite_border, label: 'Favorites'),
-  DashboardNavItem(icon: Icons.event_available, label: 'Reservations'),
-  DashboardNavItem(icon: Icons.chat_bubble_outline, label: 'Inquiries'),
-  DashboardNavItem(icon: Icons.notifications_none, label: 'Notifications'),
-  DashboardNavItem(icon: Icons.person_outline, label: 'Profile'),
+  DashboardNavItem(
+    icon: Icons.directions_car_outlined,
+    selectedIcon: Icons.directions_car_filled,
+    label: 'Browse Cars',
+  ),
+  DashboardNavItem(
+    icon: Icons.favorite_border,
+    selectedIcon: Icons.favorite,
+    label: 'Favorites',
+  ),
+  DashboardNavItem(
+    icon: Icons.event_available_outlined,
+    selectedIcon: Icons.event_available,
+    label: 'Reservations',
+  ),
+  DashboardNavItem(
+    icon: Icons.chat_bubble_outline,
+    selectedIcon: Icons.chat_bubble,
+    label: 'Inquiries',
+  ),
+  DashboardNavItem(
+    icon: Icons.notifications_none_outlined,
+    selectedIcon: Icons.notifications,
+    label: 'Notifications',
+  ),
+  DashboardNavItem(
+    icon: Icons.person_outline,
+    selectedIcon: Icons.person,
+    label: 'Profile',
+  ),
 ];
 
-/// The nav list itself — same widget renders inside the desktop sidebar
-/// and inside the mobile Drawer, so the two surfaces never drift apart.
+/// The nav list — identical widget renders in the desktop sidebar and
+/// the mobile Drawer so the two surfaces never drift apart visually.
 class DashboardNavList extends StatelessWidget {
   const DashboardNavList({
     super.key,
@@ -30,87 +60,216 @@ class DashboardNavList extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final VoidCallback onSignOut;
 
-  /// Maps a nav item's index to an unread count to show as a small
-  /// pill next to it (e.g. {3: 2} shows "2" next to Notifications).
+  /// Maps a tab index to an unread-notification count shown as a red pill.
   final Map<int, int> badgeCounts;
 
   @override
   Widget build(BuildContext context) {
+    final user = Supabase.instance.client.auth.currentUser;
+    final email = user?.email ?? '';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 16),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            'MERIDIAN MOTORS',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-              letterSpacing: 0.5,
+        // ── Sidebar / Drawer header ──────────────────────────────────────
+        _buildHeader(email),
+        const SizedBox(height: 8),
+        Divider(color: Colors.white.withOpacity(0.07), height: 1),
+        const SizedBox(height: 8),
+
+        // ── Nav items ────────────────────────────────────────────────────
+        ...dashboardNavItems.asMap().entries.map(
+              (entry) => _NavItem(
+                index: entry.key,
+                item: entry.value,
+                selected: entry.key == selectedIndex,
+                badge: badgeCounts[entry.key] ?? 0,
+                onTap: () => onSelect(entry.key),
+              ),
+            ),
+
+        const Spacer(),
+
+        // ── Sign Out ────────────────────────────────────────────────────
+        Divider(color: Colors.white.withOpacity(0.07), height: 1),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: onSignOut,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.logout_rounded,
+                        size: 20, color: Color(0xFFDC2626)),
+                    const SizedBox(width: 14),
+                    const Text(
+                      'Sign Out',
+                      style: TextStyle(
+                        color: Color(0xFFDC2626),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 24),
-        ...dashboardNavItems.asMap().entries.map((entry) {
-          final index = entry.key;
-          final item = entry.value;
-          final selected = index == selectedIndex;
-          final badge = badgeCounts[index] ?? 0;
+      ],
+    );
+  }
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-            child: Material(
-              color: selected ? Colors.white.withOpacity(0.08) : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-              child: ListTile(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                leading: Icon(
-                  item.icon,
-                  color: selected ? Colors.white : const Color(0xFF9CA3AF),
-                ),
-                title: Text(
-                  item.label,
+  Widget _buildHeader(String email) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+      child: Row(
+        children: [
+          // Logo
+          Image.asset(
+            'assets/images/meridian_logo.png',
+            height: 36,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Text(
+              'MM',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Meridian Motors',
                   style: TextStyle(
-                    color: selected ? Colors.white : const Color(0xFF9CA3AF),
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    letterSpacing: 0.2,
                   ),
                 ),
-                trailing: badge > 0
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                Text(
+                  email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.index,
+    required this.item,
+    required this.selected,
+    required this.badge,
+    required this.onTap,
+  });
+
+  final int index;
+  final DashboardNavItem item;
+  final bool selected;
+  final int badge;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 2, 12, 2),
+      child: Stack(
+        children: [
+          // Selected left-bar accent
+          if (selected)
+            Positioned(
+              left: 0,
+              top: 8,
+              bottom: 8,
+              child: Container(
+                width: 3,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+          Material(
+            color: selected
+                ? Colors.white.withOpacity(0.07)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      selected ? item.selectedIcon : item.icon,
+                      size: 20,
+                      color: selected
+                          ? Colors.white
+                          : const Color(0xFF6B7280),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        item.label,
+                        style: TextStyle(
+                          color: selected
+                              ? Colors.white
+                              : const Color(0xFF9CA3AF),
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          fontSize: 14.5,
+                        ),
+                      ),
+                    ),
+                    if (badge > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
                           color: const Color(0xFFDC2626),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           '$badge',
-                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                      )
-                    : null,
-                onTap: () => onSelect(index),
+                      ),
+                  ],
+                ),
               ),
             ),
-          );
-        }),
-        const Spacer(),
-        const Divider(color: Colors.white12, height: 1),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: ListTile(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            leading: const Icon(Icons.logout, color: Color(0xFF9CA3AF)),
-            title: const Text(
-              'Sign Out',
-              style: TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w600),
-            ),
-            onTap: onSignOut,
           ),
-        ),
-        const SizedBox(height: 12),
-      ],
+        ],
+      ),
     );
   }
 }

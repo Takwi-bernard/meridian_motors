@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:meridian_motors/features/admin/auth/admin_login.dart';
 import '../welcome/welcome_page.dart';
 
+/// Production splash screen. Displays the Meridian Motors logo on a
+/// pure dark canvas, fades it in with a smooth animation, then
+/// navigates to [WelcomePage] after 3 seconds. The dark background
+/// matches the app theme exactly so there is zero flash or color jump
+/// during the transition.
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -10,62 +14,93 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> {
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<double> _scaleAnimation;
+
   @override
   void initState() {
     super.initState();
-    _navigateToWelcome();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.88, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    // Start the logo fade-in immediately.
+    _controller.forward();
+
+    // Navigate after the brand has had time to land.
+    Timer(const Duration(milliseconds: 3000), _navigate);
   }
 
-  void _navigateToWelcome() {
-    // 3 seconds gives the user the perfect amount of time to take in the brand logo
-    Timer(const Duration(seconds: 5), () {
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const WelcomePage(),
-        ),
-      );
-    });
+  void _navigate() {
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const WelcomePage(),
+        transitionDuration: const Duration(milliseconds: 600),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Primary branding colors derived from your official logo
-    const brandNavy = Color(0xFF0F2C59); 
-
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 245, 244, 248), // Clean, high-end white canvas to let the logo pop
-      body: SafeArea(
-        child: Center(
+      // Must match the app's scaffoldBackgroundColor exactly — this is
+      // the single fix that eliminates the light blue flash on deploy.
+      backgroundColor: const Color(0xFF0F0F11),
+      body: Center(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: child,
+              ),
+            );
+          },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
-                
-                // --- MERIDIAN MOTORS OFFICIAL LOGO ---
-                // Once added to your pubspec.yaml assets, swap this with:
-                 Image.asset('assets/images/meridian_logo.png', width: MediaQuery.of(context).size.width * 0.7),
-               
-                
-                const Spacer(),
-                
-                // Premium, ultra-thin progress indicator matched to the logo theme
-                SizedBox(
-                  width: 30,
-                  height: 30,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 6.0,
-                    valueColor: const AlwaysStoppedAnimation<Color>(brandNavy),
-                    backgroundColor: brandNavy.withOpacity(0.1),
-                  ),
+            padding: const EdgeInsets.symmetric(horizontal: 48),
+            child: Image.asset(
+              'assets/images/meridian_logo.png',
+              width: MediaQuery.of(context).size.width * 0.65,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => const Text(
+                'MERIDIAN MOTORS',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
                 ),
-                
-          
-              ],
+              ),
             ),
           ),
         ),
