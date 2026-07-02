@@ -13,8 +13,6 @@
 //   EMAIL_FROM            : Meridian Motors <noreply@meridianmotors.com>
 //   SUPABASE_URL          : https://xxxx.supabase.co
 //   SUPABASE_SERVICE_KEY  : your service role key (to query DB for extra data)
-//https://euucepsoguteynqcxbkb.supabase.co/functions/v1/notify-customer
-//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV1dWNlcHNvZ3V0ZXlucWN4YmtiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDc3MjUzOCwiZXhwIjoyMDk2MzQ4NTM4fQ.uLIimn1bnTSeLFlGEAV6Bzq_WnDO-zXgkVioaybsJmU
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
